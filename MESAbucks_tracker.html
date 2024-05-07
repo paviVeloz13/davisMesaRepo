@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Balance Portal</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>Student Balance Portal</h1>
+    <div class="container">
+        <button onclick="showAddUserForm()">Add User</button>
+        <button onclick="showDeleteUserForm()">Delete User</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Balance</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="user-table">
+                <!-- Users will be dynamically populated here -->
+            </tbody>
+        </table>
+        <div id="transaction-history" style="display: none;">
+            <h2 id="selected-username"></h2>
+            <p>Your Balance History:</p>
+            <ul class="balance-history" id="balance-history">
+                <!-- Balance history will be dynamically populated here -->
+            </ul>
+            <p>Current Balance: <span id="current-balance">0</span></p>
+            <label for="transaction-amount">Transaction Amount:</label>
+            <input type="number" id="transaction-amount" min="0" step="1" required><br><br>
+            <label for="transaction-description">Transaction Description:</label>
+            <input type="text" id="transaction-description" required><br><br>
+            <button onclick="addTransaction()">Add Transaction</button>
+            <button onclick="goBack()">Go Back</button>
+        </div>
+        <div id="add-user-form" style="display: none;">
+            <h2>Add User</h2>
+            <label for="new-username">Username:</label>
+            <input type="text" id="new-username"><br><br>
+            <label for="initial-balance">Initial Balance:</label>
+            <input type="number" id="initial-balance" min="0" step="1"><br><br>
+            <button onclick="addUser()">Submit</button>
+            <button onclick="hideAddUserForm()">Cancel</button>
+        </div>
+        <div id="delete-user-form" style="display: none;">
+            <h2>Delete User</h2>
+            <label for="username-to-delete">Username:</label>
+            <input type="text" id="username-to-delete"><br><br>
+            <button onclick="deleteUser()">Submit</button>
+            <button onclick="hideDeleteUserForm()">Cancel</button>
+        </div>
+    </div>
+
+
+
+<script>
+    // Simulated student data with balances and transaction history
+    let students = [
+        { username: 'student1', balance: 100, transactions: [{amount: 10, description: "Initial balance"}] },
+        { username: 'student2', balance: 50, transactions: [{amount: 20, description: "Initial balance"}] }
+        // Add more students and their data here
+    ];
+
+    // Function to populate user table
+    function populateUserTable() {
+        const tableBody = document.getElementById('user-table');
+        tableBody.innerHTML = ''; // Clear previous content
+        students.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${student.username}</td>
+                <td>${student.balance}</td>
+                <td><button onclick="showTransactionHistory('${student.username}')">View Transactions</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Function to show transaction history for a specific user
+    function showTransactionHistory(username) {
+        const selectedUser = students.find(student => student.username === username);
+        document.getElementById('selected-username').innerText = username;
+        document.getElementById('current-balance').innerText = selectedUser.balance;
+        populateTransactionHistory(selectedUser);
+        document.getElementById('user-table').style.display = 'none';
+        document.getElementById('transaction-history').style.display = 'block';
+    }
+
+    // Function to populate transaction history
+    function populateTransactionHistory(user) {
+        const historyList = document.getElementById('balance-history');
+        historyList.innerHTML = ''; // Clear previous history
+        user.transactions.forEach(transaction => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${transaction.description}: ${transaction.amount >= 0 ? `Added $${transaction.amount}` : `Deducted $${Math.abs(transaction.amount)}`}`;
+            historyList.appendChild(listItem);
+        });
+    }
+
+    // Function to add transaction
+    function addTransaction() {
+        const amount = parseInt(document.getElementById('transaction-amount').value);
+        const description = document.getElementById('transaction-description').value;
+        if (!isNaN(amount) && description.trim() !== '') {
+            const username = document.getElementById('selected-username').innerText;
+            const currentUser = students.find(student => student.username === username);
+            currentUser.transactions.push({ amount: amount, description: description });
+            currentUser.balance += amount;
+            document.getElementById('current-balance').innerText = currentUser.balance;
+            populateTransactionHistory(currentUser);
+        } else {
+            alert('Please enter a valid amount and description.');
+        }
+    }
+
+    // Function to go back to user table
+    function goBack() {
+        document.getElementById('user-table').style.display = 'block';
+        document.getElementById('transaction-history').style.display = 'none';
+    }
+
+    // Function to show add user form
+    function showAddUserForm() {
+        document.getElementById('add-user-form').style.display = 'block';
+    }
+
+    // Function to hide add user form
+    function hideAddUserForm() {
+        document.getElementById('add-user-form').style.display = 'none';
+    }
+
+    // Function to add a new user
+    function addUser() {
+        const newUsername = document.getElementById('new-username').value.trim();
+        const initialBalance = parseInt(document.getElementById('initial-balance').value);
+        if (newUsername === '' || isNaN(initialBalance)) {
+            alert('Please enter valid data for username and initial balance.');
+            return;
+        }
+        if (students.find(student => student.username === newUsername)) {
+            alert('User already exists.');
+            return;
+        }
+        students.push({ username: newUsername, balance: initialBalance, transactions: [] });
+        populateUserTable();
+        hideAddUserForm();
+    }
+
+    // Function to show delete user form
+    function showDeleteUserForm() {
+        document.getElementById('delete-user-form').style.display = 'block';
+    }
+
+    // Function to hide delete user form
+    function hideDeleteUserForm() {
+        document.getElementById('delete-user-form').style.display = 'none';
+    }
+
+    // Function to delete user
+    function deleteUser() {
+        const usernameToDelete = document.getElementById('username-to-delete').value.trim();
+        const indexToDelete = students.findIndex(student => student.username === usernameToDelete);
+        if (indexToDelete === -1) {
+            alert('User not found.');
+            return;
+        }
+        students.splice(indexToDelete, 1);
+        populateUserTable();
+        hideDeleteUserForm();
+    }
+
+    // Populate user table on page load
+    populateUserTable();
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
